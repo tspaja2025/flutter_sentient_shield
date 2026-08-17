@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_sentient_shield/router/router.dart';
 import 'package:flutter_sentient_shield/theme/sentient_shield_theme.dart';
 
