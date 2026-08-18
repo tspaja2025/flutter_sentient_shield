@@ -411,7 +411,6 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        // View toggle
                         Container(
                           decoration: BoxDecoration(
                             color: tokens.surfaceContainerLow,
@@ -436,7 +435,6 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // Filter chips
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -455,14 +453,10 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                 ),
               ),
             ),
-
-            // Camera grid/list
             SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: tokens.spacingMd),
               sliver: _isGridView ? _buildCameraGrid() : _buildCameraList(),
             ),
-
-            // Bottom button
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(tokens.spacingMd),
