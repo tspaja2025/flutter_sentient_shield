@@ -79,7 +79,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
     _statusUpdateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted) {
         setState(() {
-          _cameras.forEach((camera) {
+          for (final camera in _cameras) {
             if (camera.status != CameraStatus.offline) {
               if (DateTime.now().second % 7 == 0) {
                 camera.status = CameraStatus.motion;
@@ -95,7 +95,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                 camera.timestamp = DateTime.now();
               }
             }
-          });
+          }
         });
       }
     });
@@ -127,23 +127,22 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
 
   Future<void> _refreshCameras() async {
     await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
     setState(() {
-      _cameras.forEach((camera) {
+      for (final camera in _cameras) {
         if (camera.status != CameraStatus.offline) {
           camera.status = CameraStatus.clear;
           camera.lastActivity = 'All clear';
           camera.timestamp = DateTime.now();
         }
-      });
+      }
     });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cameras refreshed'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Cameras refreshed'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   void _showCameraDetail(BuildContext context, Camera camera) {

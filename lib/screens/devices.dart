@@ -156,7 +156,7 @@ class _DevicesState extends State<Devices> with SingleTickerProviderStateMixin {
     _statusUpdateTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (mounted) {
         setState(() {
-          _devices.forEach((device) {
+          for (final device in _devices) {
             if (device.type == DeviceType.sensor && device.isOnline) {
               if (DateTime.now().second % 5 == 0) {
                 device.status = DeviceStatus.active;
@@ -169,7 +169,7 @@ class _DevicesState extends State<Devices> with SingleTickerProviderStateMixin {
                 device.statusText = 'Clear';
               }
             }
-          });
+          }
         });
       }
     });
@@ -223,23 +223,22 @@ class _DevicesState extends State<Devices> with SingleTickerProviderStateMixin {
 
   Future<void> _refreshDevices() async {
     await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
     setState(() {
-      _devices.forEach((device) {
+      for (final device in _devices) {
         device.isOnline = true;
         if (device.type != DeviceType.lock) {
           device.status = DeviceStatus.secure;
           device.statusText = 'Clear';
         }
-      });
+      }
     });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Devices refreshed'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Devices refreshed'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   void _showDeviceDetail(BuildContext context, Device device) {

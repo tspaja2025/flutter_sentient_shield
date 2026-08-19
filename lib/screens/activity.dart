@@ -226,62 +226,56 @@ class _ActivityState extends State<Activity>
     return activities;
   }
 
-  List<ActivityItem> get _todayActivities => _filteredActivities
-      .where(
-        (item) => item.timestamp.isAfter(
-          DateTime.now().subtract(const Duration(days: 1)),
-        ),
-      )
-      .toList();
-
-  List<ActivityItem> get _yesterdayActivities => _filteredActivities
-      .where(
-        (item) =>
-            item.timestamp.isAfter(
-              DateTime.now().subtract(const Duration(days: 2)),
-            ) &&
-            item.timestamp.isBefore(
-              DateTime.now().subtract(const Duration(days: 1)),
-            ),
-      )
-      .toList();
-
-  List<ActivityItem> get _olderActivities => _filteredActivities
-      .where(
-        (item) => item.timestamp.isBefore(
-          DateTime.now().subtract(const Duration(days: 2)),
-        ),
-      )
-      .toList();
-
   int get _unreadCount => _allActivities.where((item) => !item.isRead).length;
 
-  int get _totalItemCount {
-    int count = 0;
-    if (_todayActivities.isNotEmpty) count += 1;
-    count += _todayActivities.length;
-    if (_yesterdayActivities.isNotEmpty) count += 1;
-    count += _yesterdayActivities.length;
-    if (_olderActivities.isNotEmpty) count += 1;
-    count += _olderActivities.length;
-    return count;
+  List<MapEntry<String, List<ActivityItem>>> get _activitySections {
+    final activities = _filteredActivities;
+    final now = DateTime.now();
+
+    final today = activities
+        .where(
+          (item) =>
+              item.timestamp.isAfter(now.subtract(const Duration(days: 1))),
+        )
+        .toList();
+    final yesterday = activities
+        .where(
+          (item) =>
+              item.timestamp.isAfter(now.subtract(const Duration(days: 2))) &&
+              item.timestamp.isBefore(now.subtract(const Duration(days: 1))),
+        )
+        .toList();
+    final older = activities
+        .where(
+          (item) => item.timestamp.isBefore(
+            DateTime.now().subtract(const Duration(days: 2)),
+          ),
+        )
+        .toList();
+
+    return [
+      if (today.isNotEmpty) MapEntry('Today', today),
+      if (yesterday.isNotEmpty) MapEntry('Yesterday', yesterday),
+      if (older.isNotEmpty) MapEntry('Older', older),
+    ];
   }
 
   Future<void> _refreshActivities() async {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
-      _allActivities.forEach((item) => item.isRead = true);
+      for (final item in _allActivities) {
+        item.isRead = true;
+      }
     });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Activities refreshed'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Activities refreshed'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   void _showActivityDetail(BuildContext context, ActivityItem item) {
@@ -344,6 +338,11 @@ class _ActivityState extends State<Activity>
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final tokens = Theme.of(context).extension<SentientTokens>()!;
+    final sections = _activitySections;
+    final itemCount = sections.fold<int>(
+      0,
+      (count, section) => count + section.value.length + 1,
+    );
 
     return AppScaffold(
       currentIndex: 3,
@@ -424,48 +423,26 @@ class _ActivityState extends State<Activity>
                 : SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       int currentIndex = 0;
-                      // Today
-                      if (_todayActivities.isNotEmpty) {
-                        if (index == 0) {
-                          return _buildSectionHeader(context, 'Today');
+                      for (final section in sections) {
+                        final headerIndex = currentIndex;
+                        final itemsStartIndex = currentIndex + 1;
+                        final itemsEndIndex =
+                            itemsStartIndex + section.value.length;
+
+                        if (index == headerIndex) {
+                          return _buildSectionHeader(context, section.key);
                         }
-                        currentIndex = 1;
-                        if (index < currentIndex + _todayActivities.length) {
-                          final itemIndex = index - currentIndex;
-                          final item = _todayActivities[itemIndex];
+
+                        if (index >= itemsStartIndex && index < itemsEndIndex) {
+                          final item = section.value[index - itemsStartIndex];
+
                           return _buildActivityCard(context, item);
                         }
-                        currentIndex += _todayActivities.length;
-                      }
-                      // Yesterday
-                      if (_yesterdayActivities.isNotEmpty) {
-                        if (index == currentIndex) {
-                          return _buildSectionHeader(context, 'Yesterday');
-                        }
-                        currentIndex += 1;
-                        if (index <
-                            currentIndex + _yesterdayActivities.length) {
-                          final itemIndex = index - currentIndex;
-                          final item = _yesterdayActivities[itemIndex];
-                          return _buildActivityCard(context, item);
-                        }
-                        currentIndex += _yesterdayActivities.length;
-                      }
-                      // Older
-                      if (_olderActivities.isNotEmpty) {
-                        if (index == currentIndex) {
-                          return _buildSectionHeader(context, 'Older');
-                        }
-                        currentIndex += 1;
-                        if (index < currentIndex + _olderActivities.length) {
-                          final itemIndex = index - currentIndex;
-                          final item = _olderActivities[itemIndex];
-                          return _buildActivityCard(context, item);
-                        }
-                        currentIndex += _olderActivities.length;
+
+                        currentIndex = itemsEndIndex;
                       }
                       return const SizedBox.shrink();
-                    }, childCount: _totalItemCount),
+                    }, childCount: itemCount),
                   ),
             SliverToBoxAdapter(child: _buildEndOfHistory(context)),
           ],
