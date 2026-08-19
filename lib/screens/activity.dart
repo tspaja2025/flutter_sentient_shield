@@ -14,7 +14,6 @@ class Activity extends StatefulWidget {
 class _ActivityState extends State<Activity>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _pulseAnimation;
   Timer? _updateTimer;
   String _selectedFilter = 'All Events';
   bool _isLoading = false;
@@ -164,9 +163,6 @@ class _ActivityState extends State<Activity>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
     _updateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         setState(() {
@@ -259,6 +255,17 @@ class _ActivityState extends State<Activity>
 
   int get _unreadCount => _allActivities.where((item) => !item.isRead).length;
 
+  int get _totalItemCount {
+    int count = 0;
+    if (_todayActivities.isNotEmpty) count += 1;
+    count += _todayActivities.length;
+    if (_yesterdayActivities.isNotEmpty) count += 1;
+    count += _yesterdayActivities.length;
+    if (_olderActivities.isNotEmpty) count += 1;
+    count += _olderActivities.length;
+    return count;
+  }
+
   Future<void> _refreshActivities() async {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(milliseconds: 800));
@@ -276,8 +283,60 @@ class _ActivityState extends State<Activity>
     }
   }
 
-  void _showDeviceDetail(BuildContext context, ActivityItem item) {}
-  void _showDeviceOptions(BuildContext context, ActivityItem item) {}
+  void _showActivityDetail(BuildContext context, ActivityItem item) {
+    setState(() => item.isRead = true);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => ActivityDetailSheet(activity: item),
+    );
+  }
+
+  void _showActivityOptions(BuildContext context, ActivityItem item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Activity Options'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              onTap: () {
+                setState(() => item.isRead = !item.isRead);
+                Navigator.pop(context);
+              },
+              leading: Icon(
+                item.isRead
+                    ? Symbols.mark_email_unread
+                    : Symbols.mark_email_read,
+              ),
+              title: Text(item.isRead ? 'Mark as unread' : 'Mark as read'),
+            ),
+            ListTile(
+              onTap: () => Navigator.pop(context),
+              leading: const Icon(Symbols.share),
+              title: const Text('Share Event'),
+            ),
+            if (item.type == ActivityType.alarm)
+              ListTile(
+                onTap: () => Navigator.pop(context),
+                leading: const Icon(Symbols.snooze),
+                title: Text('Snooze alert'),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -362,48 +421,50 @@ class _ActivityState extends State<Activity>
             _filteredActivities.isEmpty
                 ? SliverToBoxAdapter(child: _buildEmptyState(context))
                 : SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == 0 && _todayActivities.isNotEmpty) {
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      int currentIndex = 0;
+                      // Today
+                      if (_todayActivities.isNotEmpty) {
+                        if (index == 0) {
                           return _buildSectionHeader(context, 'Today');
-                        } else if (index == _todayActivities.length &&
-                            _yesterdayActivities.isNotEmpty) {
-                          return _buildSectionHeader(context, 'Yesterday');
-                        } else if (index ==
-                                _todayActivities.length +
-                                    _yesterdayActivities.length &&
-                            _olderActivities.isNotEmpty) {
-                          return _buildSectionHeader(context, 'Older');
                         }
-
-                        int itemIndex;
-                        if (index < _todayActivities.length) {
-                          itemIndex = index;
+                        currentIndex = 1;
+                        if (index < currentIndex + _todayActivities.length) {
+                          final itemIndex = index - currentIndex;
                           final item = _todayActivities[itemIndex];
                           return _buildActivityCard(context, item);
-                        } else if (index <
-                            _todayActivities.length +
-                                _yesterdayActivities.length) {
-                          itemIndex = index - _todayActivities.length;
+                        }
+                        currentIndex += _todayActivities.length;
+                      }
+                      // Yesterday
+                      if (_yesterdayActivities.isNotEmpty) {
+                        if (index == currentIndex) {
+                          return _buildSectionHeader(context, 'Yesterday');
+                        }
+                        currentIndex += 1;
+                        if (index <
+                            currentIndex + _yesterdayActivities.length) {
+                          final itemIndex = index - currentIndex;
                           final item = _yesterdayActivities[itemIndex];
                           return _buildActivityCard(context, item);
-                        } else {
-                          itemIndex =
-                              index -
-                              _todayActivities.length -
-                              _yesterdayActivities.length;
+                        }
+                        currentIndex += _yesterdayActivities.length;
+                      }
+                      // Older
+                      if (_olderActivities.isNotEmpty) {
+                        if (index == currentIndex) {
+                          return _buildSectionHeader(context, 'Older');
+                        }
+                        currentIndex += 1;
+                        if (index < currentIndex + _olderActivities.length) {
+                          final itemIndex = index - currentIndex;
                           final item = _olderActivities[itemIndex];
                           return _buildActivityCard(context, item);
                         }
-                      },
-                      childCount:
-                          _todayActivities.length +
-                          _yesterdayActivities.length +
-                          _olderActivities.length +
-                          (_todayActivities.isNotEmpty ? 1 : 0) +
-                          (_yesterdayActivities.isNotEmpty ? 1 : 0) +
-                          (_olderActivities.isNotEmpty ? 1 : 0),
-                    ),
+                        currentIndex += _olderActivities.length;
+                      }
+                      return const SizedBox.shrink();
+                    }, childCount: _totalItemCount),
                   ),
             SliverToBoxAdapter(child: _buildEndOfHistory(context)),
           ],
@@ -453,8 +514,66 @@ class _ActivityState extends State<Activity>
   Widget _buildCategoryFilters(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final tokens = Theme.of(context).extension<SentientTokens>()!;
-    return Container();
+    final filters = ['All Events', 'Alarms', 'Access', 'System'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filters.map((filter) {
+          final isSelected = _selectedFilter == filter;
+          int count = 0;
+          if (filter == 'All Events') {
+            count = _allActivities.length;
+          } else {
+            final type = filter.toLowerCase();
+            count = _allActivities
+                .where(
+                  (item) =>
+                      item.type.toString().split('.').last.toLowerCase() ==
+                      type,
+                )
+                .length;
+          }
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Text(filter),
+              avatar: filter != 'All events'
+                  ? Icon(
+                      _getFilterIcon(filter),
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      size: 16,
+                    )
+                  : null,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedFilter = selected ? filter : 'All Events';
+                });
+              },
+              backgroundColor: colorScheme.surfaceContainerLow,
+              selectedColor: colorScheme.primaryContainer,
+              labelStyle: textTheme.labelMedium?.copyWith(
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.outlineVariant,
+                  width: 1,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   Widget _buildQuickStats(BuildContext context) {
@@ -488,7 +607,36 @@ class _ActivityState extends State<Activity>
             ),
           ),
         ),
-        // in progress
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _unreadCount > 0 ? colorScheme.error : Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _unreadCount > 0 ? '$_unreadCount unread' : 'All read',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: _unreadCount > 0 ? colorScheme.error : Colors.green,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -559,8 +707,8 @@ class _ActivityState extends State<Activity>
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => _showDeviceDetail(context, item),
-          onLongPress: () => _showDeviceOptions(context, item),
+          onTap: () => _showActivityDetail(context, item),
+          onLongPress: () => _showActivityOptions(context, item),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -725,10 +873,25 @@ class _ActivityState extends State<Activity>
         return colorScheme.onSurfaceVariant;
     }
   }
+
+  IconData _getFilterIcon(String filter) {
+    switch (filter) {
+      case 'Alarms':
+        return Symbols.warning;
+      case 'Access':
+        return Symbols.key;
+      case 'System':
+        return Symbols.security;
+      default:
+        return Symbols.list_alt;
+    }
+  }
 }
 
 class ActivityDetailSheet extends StatefulWidget {
-  const ActivityDetailSheet({super.key});
+  final ActivityItem activity;
+
+  const ActivityDetailSheet({super.key, required this.activity});
 
   @override
   State<ActivityDetailSheet> createState() => _ActivityDetailSheetState();
@@ -739,9 +902,226 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final tokens = Theme.of(context).extension<SentientTokens>()!;
-    // TODO: implement build
-    throw UnimplementedError();
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _getPriorityColor(widget.activity.priority),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  widget.activity.icon,
+                  color: _getPriorityColor(widget.activity.priority),
+                  size: 28,
+                  fill: 1,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.activity.title, style: textTheme.headlineSmall),
+                    Text(
+                      widget.activity.subtitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Symbols.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Event Details',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                Text(widget.activity.description, style: textTheme.bodyMedium),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Time',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            _formatDateTime(widget.activity.timestamp),
+                            style: textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Priority',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            widget.activity.priority
+                                .toString()
+                                .split('.')
+                                .last
+                                .toUpperCase(),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: _getPriorityColor(
+                                widget.activity.priority,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Type',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            widget.activity.type
+                                .toString()
+                                .split('.')
+                                .last
+                                .toUpperCase(),
+                            style: textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Status',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: widget.activity.isRead
+                                      ? Colors.green
+                                      : colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.activity.isRead ? 'Read' : 'Unread',
+                                style: textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Symbols.share),
+                  label: const Text('Share'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      widget.activity.isRead = !widget.activity.isRead;
+                    });
+                  },
+                  icon: Icon(
+                    widget.activity.isRead
+                        ? Symbols.mark_email_unread
+                        : Symbols.mark_email_read,
+                  ),
+                  label: Text(
+                    widget.activity.isRead ? 'Mark unread' : 'Mark read',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} '
+        '${time.month}/${time.day}/${time.year}';
+  }
+
+  Color _getPriorityColor(ActivityPriority priority) {
+    final colorScheme = Theme.of(context).colorScheme;
+    switch (priority) {
+      case ActivityPriority.critical:
+        return colorScheme.error;
+      case ActivityPriority.high:
+        return colorScheme.tertiary;
+      case ActivityPriority.medium:
+        return colorScheme.primary;
+      case ActivityPriority.low:
+        return colorScheme.onSurfaceVariant;
+    }
   }
 }
 
