@@ -281,7 +281,9 @@ class _DevicesState extends State<Devices> with SingleTickerProviderStateMixin {
                 Navigator.pop(context);
               },
               leading: Icon(
-                device.isOnline ? Symbols.power_off : Icons.power_settings_new,
+                device.isOnline
+                    ? Symbols.power_off
+                    : Symbols.power_settings_new,
                 color: device.isOnline ? Colors.red : Colors.green,
               ),
               title: Text(
@@ -945,7 +947,7 @@ class _DeviceDetailSheetState extends State<DeviceDetailSheet> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: const Icon(Symbols.close),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -1009,7 +1011,7 @@ class _DeviceDetailSheetState extends State<DeviceDetailSheet> {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.edit),
+                  icon: const Icon(Symbols.edit),
                   label: const Text('Settings'),
                 ),
               ),
@@ -1017,7 +1019,7 @@ class _DeviceDetailSheetState extends State<DeviceDetailSheet> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.history),
+                  icon: const Icon(Symbols.history),
                   label: const Text('History'),
                 ),
               ),

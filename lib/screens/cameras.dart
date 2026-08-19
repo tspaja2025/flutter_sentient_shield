@@ -17,7 +17,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
   Timer? _statusUpdateTimer;
   String _selectedFilter = 'All';
   bool _isGridView = false;
-  int _selectedCameraIndex = 0;
+  // int _selectedCameraIndex = 0;
 
   final List<Camera> _cameras = [
     Camera(
@@ -165,7 +165,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.star),
+              leading: const Icon(Symbols.star),
               title: Text(
                 camera.isFavorite
                     ? 'Remove from favorites'
@@ -179,14 +179,14 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings),
+              leading: const Icon(Symbols.settings),
               title: const Text('Camera settings'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.history),
+              leading: const Icon(Symbols.history),
               title: const Text('View history'),
               onTap: () {
                 Navigator.pop(context);
@@ -252,13 +252,13 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.camera, color: Colors.white),
+                          icon: const Icon(Symbols.camera, color: Colors.white),
                           onPressed: () {},
                         ),
                         const SizedBox(width: 16),
                         IconButton(
                           icon: const Icon(
-                            Icons.record_voice_over,
+                            Symbols.record_voice_over,
                             color: Colors.white,
                           ),
                           onPressed: () {},
@@ -266,7 +266,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                         const SizedBox(width: 16),
                         IconButton(
                           icon: const Icon(
-                            Icons.screenshot,
+                            Symbols.screenshot,
                             color: Colors.white,
                           ),
                           onPressed: () {},
@@ -281,7 +281,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
               top: 8,
               right: 8,
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Symbols.close, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -302,24 +302,24 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.video_library),
+                leading: const Icon(Symbols.video_library),
                 title: const Text('Today\'s recordings'),
                 subtitle: const Text('12 events recorded'),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Symbols.chevron_right),
                 onTap: () {},
               ),
               ListTile(
-                leading: const Icon(Icons.history),
+                leading: const Icon(Symbols.history),
                 title: const Text('Past recordings'),
                 subtitle: const Text('View archive'),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Symbols.chevron_right),
                 onTap: () {},
               ),
               ListTile(
-                leading: const Icon(Icons.download),
+                leading: const Icon(Symbols.download),
                 title: const Text('Download recordings'),
                 subtitle: const Text('Select date range'),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Symbols.chevron_right),
                 onTap: () {},
               ),
             ],
@@ -688,7 +688,7 @@ class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
                   right: camera.status == CameraStatus.offline ? 8 : 60,
                   child: IconButton(
                     icon: Icon(
-                      camera.isFavorite ? Icons.star : Icons.star_border,
+                      camera.isFavorite ? Symbols.star : Symbols.star_border,
                       color: camera.isFavorite ? Colors.amber : Colors.white,
                       size: 20,
                     ),
@@ -893,7 +893,7 @@ class _CameraDetailSheetState extends State<CameraDetailSheet> {
               ),
               IconButton(
                 icon: Icon(
-                  widget.camera.isFavorite ? Icons.star : Icons.star_border,
+                  widget.camera.isFavorite ? Symbols.star : Symbols.star_border,
                   color: widget.camera.isFavorite ? Colors.amber : null,
                 ),
                 onPressed: () {
@@ -964,7 +964,7 @@ class _CameraDetailSheetState extends State<CameraDetailSheet> {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.screenshot),
+                  icon: const Icon(Symbols.screenshot),
                   label: const Text('Snapshot'),
                 ),
               ),
@@ -972,7 +972,7 @@ class _CameraDetailSheetState extends State<CameraDetailSheet> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.record_voice_over),
+                  icon: const Icon(Symbols.record_voice_over),
                   label: const Text('Record'),
                 ),
               ),

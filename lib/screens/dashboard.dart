@@ -562,7 +562,7 @@ class _DashboardState extends State<Dashboard>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.circle,
+                                  Symbols.circle,
                                   size: 6,
                                   color: Colors.green,
                                 ),
