@@ -1,10 +1,9 @@
 import 'dart:async';
+import 'package:flutter_sentient_shield/models/system_model.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_sentient_shield/shared/app_scaffold.dart';
 import 'package:flutter_sentient_shield/theme/sentient_shield_theme.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-
-enum System { disarmed, home, away }
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});

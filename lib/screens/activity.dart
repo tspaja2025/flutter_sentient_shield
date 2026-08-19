@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_sentient_shield/models/activity_model.dart';
 import 'package:flutter_sentient_shield/theme/sentient_shield_theme.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_sentient_shield/shared/app_scaffold.dart';
@@ -1123,32 +1124,4 @@ class _ActivityDetailSheetState extends State<ActivityDetailSheet> {
         return colorScheme.onSurfaceVariant;
     }
   }
-}
-
-enum ActivityType { access, alarm, system }
-
-enum ActivityPriority { critical, high, medium, low }
-
-class ActivityItem {
-  final String id;
-  final String title;
-  final String subtitle;
-  final String description;
-  final DateTime timestamp;
-  final ActivityType type;
-  final IconData icon;
-  final ActivityPriority priority;
-  bool isRead;
-
-  ActivityItem({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.description,
-    required this.timestamp,
-    required this.type,
-    required this.icon,
-    required this.priority,
-    this.isRead = false,
-  });
 }
